@@ -62,7 +62,7 @@ origins = [
     "http://localhost",
     "http://localhost:5173",  # Front-End React (Vite)
     "http://127.0.0.1:5173",  # Alternative localhost
-    "https://frey-ia-front.vercel.app/" ,
+    "https://frey-ia-front.vercel.app" ,
     # Ajouter ici l'URL de votre application React en production
 ]
 
