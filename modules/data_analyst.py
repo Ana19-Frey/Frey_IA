@@ -1,4 +1,3 @@
-# modules/data_analyst.py
 import pandas as pd
 import io
 from google import genai
@@ -15,6 +14,7 @@ def analyze_data_pandas(data_source, is_file: bool = False) -> str:
             df = pd.read_csv(data_source) 
         else:
             # Lecture des données collées (utilisant io.StringIO pour lire la chaîne comme un fichier)
+            # Utilise une regex pour supporter la virgule ou le point-virgule comme séparateur
             df = pd.read_csv(io.StringIO(data_source), sep=r'\s*,\s*|;', engine='python', skipinitialspace=True)
             
     except Exception as e:
@@ -58,17 +58,17 @@ def format_analysis_with_gemini(client: genai.Client, raw_analysis: str, system_
     Rédige les résultats bruts de Pandas dans le style FREY via l'API Gemini.
     """
     
-    model = genai.GenerativeModel("gemini-2.5-flash", api_key=client.api_key)
+    # ✅ CORRIGÉ: Utilisation du client existant pour générer du contenu (méthode moderne)
+    model_name = "gemini-2.5-flash"
 
+    # Le prompt d'analyse est intégré dans les 'contents'
     full_analysis_prompt = f"""
-    {system_prompt}
-
     En tant que FREY, votre mission est de transformer l'analyse de données brutes suivante en un rapport lisible, pédagogique, et inspirant.
     
     Votre réponse doit :
     1. Décrire les tendances générales (dimensions, statistiques principales).
     2. Identifier un insight clé (anomalie, top valeur, corrélation implicite).
-    3. Respecter STRICTEMENT la structure finale : Réponse claire + Résumé + Suggestion.
+    3. Respecter STRICTEMENT la structure finale : Réponse claire + Résumé + Suggestion (selon les règles FREY).
     
     Voici les résultats bruts de l'analyse Pandas :
     ---
@@ -76,14 +76,18 @@ def format_analysis_with_gemini(client: genai.Client, raw_analysis: str, system_
     ---
     """
     
-    config = types.GenerationConfig(
-        temperature=0.3 # Faible créativité, l'accent est mis sur la fidélité aux données
+    config = types.GenerateContentConfig(
+        temperature=0.3, # Faible créativité, l'accent est mis sur la fidélité aux données
+        # Le prompt système est appliqué via system_instruction ici
+        system_instruction=system_prompt 
     )
 
     try:
-        response = model.generate_content(
-            contents=[full_analysis_prompt],
-            generation_config=config,
+        # Appel corrigé via client.models
+        response = client.models.generate_content(
+            model=model_name,
+            contents=[full_analysis_prompt], # On passe le prompt complet ici
+            config=config,
         )
         return response.text.strip()
     
