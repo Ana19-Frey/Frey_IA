@@ -58,7 +58,11 @@ def format_analysis_with_gemini(client: genai.Client, raw_analysis: str, system_
     Rédige les résultats bruts de Pandas dans le style FREY via l'API Gemini.
     """
     
-    analysis_prompt = f"""
+    model = genai.GenerativeModel("gemini-2.5-flash", api_key=client.api_key)
+
+    full_analysis_prompt = f"""
+    {system_prompt}
+
     En tant que FREY, votre mission est de transformer l'analyse de données brutes suivante en un rapport lisible, pédagogique, et inspirant.
     
     Votre réponse doit :
@@ -72,16 +76,14 @@ def format_analysis_with_gemini(client: genai.Client, raw_analysis: str, system_
     ---
     """
     
-    config = types.GenerateContentConfig(
-        system_instruction=system_prompt,
+    config = types.GenerationConfig(
         temperature=0.3 # Faible créativité, l'accent est mis sur la fidélité aux données
     )
 
     try:
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=[analysis_prompt],
-            config=config,
+        response = model.generate_content(
+            contents=[full_analysis_prompt],
+            generation_config=config,
         )
         return response.text.strip()
     

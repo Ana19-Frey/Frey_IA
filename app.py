@@ -37,7 +37,11 @@ try:
     GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
     
     # 2. Initialisation du Client Gemini
-    gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+    @st.cache_resource(show_spinner=False)
+    def get_gemini_client(api_key):
+        return genai.Client(api_key=api_key)
+    
+    gemini_client = get_gemini_client(GEMINI_API_KEY)
     
 except Exception as e:
     st.error(f"Erreur d'initialisation de l'API Gemini : {e}")
@@ -48,6 +52,7 @@ except Exception as e:
 # --- FONCTION DE RÉINITIALISATION DE LA MÉMOIRE ---
 def clear_chat_history():
     """Réinitialise la session de chat dans l'état de session de Streamlit."""
+    gemini_client = get_gemini_client(GEMINI_API_KEY)
     try:
         st.session_state.chat_session = gemini_client.chats.create(
             model="gemini-2.5-flash",
@@ -62,6 +67,7 @@ def clear_chat_history():
 
 # --- 🧠 GESTION DE LA MÉMOIRE DU CHATBOT (SESSION) ---
 if 'chat_session' not in st.session_state:
+    gemini_client = get_gemini_client(GEMINI_API_KEY)
     try:
         st.session_state.chat_session = gemini_client.chats.create(
             model="gemini-2.5-flash",
